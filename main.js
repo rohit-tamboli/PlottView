@@ -320,3 +320,80 @@ closeCard.addEventListener("click", e => {
   e.stopPropagation();
   plotCard.classList.add("hidden");
 });
+
+
+// 
+
+const IS_MOBILE = window.innerWidth < 768 || 'ontouchstart' in window;
+
+if (IS_MOBILE) {
+  plotCircles.forEach(p => {
+    p.scale.set(80, 80, 1); // bigger for finger
+  });
+}
+
+if (IS_MOBILE) {
+  locationMarkers.forEach(m => {
+    m.scale.set(180, 260, 1);
+  });
+}
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+container.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+}, { passive: true });
+
+container.addEventListener("touchend", e => {
+  const t = e.changedTouches[0];
+  const dx = Math.abs(t.clientX - touchStartX);
+  const dy = Math.abs(t.clientY - touchStartY);
+
+  // 👆 small movement = TAP
+  if (dx < 10 && dy < 10) {
+    handleMobileTap(t.clientX, t.clientY);
+  }
+});
+
+function handleMobileTap(clientX, clientY) {
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(
+    [...plotCircles, ...locationMarkers],
+    true
+  );
+
+  if (!hits.length) return;
+
+  const obj = hits[0].object;
+
+  if (obj.isLocationMarker) {
+    alert(obj.userData.name);
+    return;
+  }
+
+  showPlotCard(obj.userData);
+}
+
+if (IS_MOBILE) {
+  container.style.cursor = "default";
+}
+
+if (IS_MOBILE) {
+  viewer.renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 1.5)
+  );
+}
+
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => {
+    viewer.onWindowResize();
+  }, 300);
+});
