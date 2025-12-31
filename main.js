@@ -1,8 +1,7 @@
 /***********************
  * CONFIG
  ***********************/
-const CIRCLE_SCREEN_SIZE = 40; // plot circle size (px)
-const LOCATION_MARKER_SIZE = { w: 60, h: 80 }; // pin size
+const CIRCLE_SCREEN_SIZE = 40;
 
 /***********************
  * GLOBALS
@@ -42,10 +41,10 @@ const PLOT_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4kxCdoeLrM_mn4SxCkoalBkZHYASdwrCUiuKZsBMX5TrUKZePAy5gmZlOuaRAG6-LYFL6SEtJ3HK3/pub?gid=0&single=true&output=csv";
 
 const LOCATION_SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4kxCdoeLrM_mn4SxCkoalBkZHYASdwrCUiuKZsBMX5TrUKZePAy5gmZlOuaRAG6-LYFL6SEtJ3HK3/pub?gid=34569269&single=true&output=csv"; // ← replace
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4kxCdoeLrM_mn4SxCkoalBkZHYASdwrCUiuKZsBMX5TrUKZePAy5gmZlOuaRAG6-LYFL6SEtJ3HK3/pub?gid=34569269&single=true&output=csv";
 
 /***********************
- * TEXTURE HELPERS
+ * TEXTURES
  ***********************/
 function createCircleTexture(color) {
   const size = 128;
@@ -54,7 +53,6 @@ function createCircleTexture(color) {
   canvas.height = size;
   const ctx = canvas.getContext("2d");
 
-  ctx.clearRect(0, 0, size, size);
   ctx.beginPath();
   ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
   ctx.fillStyle = color;
@@ -64,69 +62,43 @@ function createCircleTexture(color) {
 }
 
 function createLocationMarkerTexture(label, color = "#ff3b3b") {
-  const width = 256;
-  const height = 256;
-
+  const w = 256, h = 256;
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, width, height);
 
-  // =====================
-  // LABEL BOX
-  // =====================
-  const padding = 12;
-  ctx.font = "bold 24px Arial";
-  const textWidth = ctx.measureText(label).width;
-
-  const boxWidth = textWidth + padding * 2;
-  const boxHeight = 40;
-  const boxX = (width - boxWidth) / 2;
-  const boxY = 10;
-
-  // box
+  // LABEL (FIXED FONT + FIXED WIDTH)
+  ctx.font = "bold 40px Arial";
   ctx.fillStyle = "#ffffff";
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.rect(boxX, boxY, boxWidth, boxHeight);
-  ctx.fill();
-  ctx.stroke();
-
-  // text
-  ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(label, width / 2, boxY + boxHeight / 2);
+  ctx.textBaseline = "top";
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 4;
 
-  // =====================
-  // STEM (2 lines)
-  // =====================
+  ctx.fillText(label, w / 2, 28, 180); // 🔥 SAME visual size
+
+  ctx.shadowBlur = 0;
+
+  // STEM
   ctx.strokeStyle = color;
   ctx.lineWidth = 6;
-  ctx.lineCap = "round";
-
   ctx.beginPath();
-  ctx.moveTo(width / 2, boxY + boxHeight + 10);
-  ctx.lineTo(width / 2, height - 60);
+  ctx.moveTo(w / 2, 60);
+  ctx.lineTo(w / 2, h - 70);
   ctx.stroke();
 
-  // =====================
-  // DOT (BOTTOM)
-  // =====================
+  // DOT
   ctx.beginPath();
-  ctx.arc(width / 2, height - 40, 12, 0, Math.PI * 2);
+  ctx.arc(w / 2, h - 45, 18, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
 
   return new THREE.CanvasTexture(canvas);
 }
 
-
 /***********************
- * COLOR HELPERS
+ * HELPERS
  ***********************/
 function getColor(status) {
   if (status === "Booked") return 0xff0000;
@@ -143,7 +115,7 @@ function getStatusColor(status) {
 }
 
 /***********************
- * ADD PLOT (CIRCLE)
+ * ADD PLOT
  ***********************/
 function addPlot(plot) {
   const colorHex = getColor(plot.status);
@@ -152,19 +124,14 @@ function addPlot(plot) {
   const material = new THREE.SpriteMaterial({
     map: createCircleTexture(colorCss),
     transparent: true,
-    depthTest: false,
-    depthWrite: false
+    depthTest: false
   });
 
   const sprite = new THREE.Sprite(material);
   sprite.position.set(...plot.position);
   sprite.scale.set(CIRCLE_SCREEN_SIZE, CIRCLE_SCREEN_SIZE, 1);
 
-
-
-
-  sprite.plotNo = plot.plot;
-  sprite.status = plot.status;
+  sprite.ignoreClick = false;
   sprite.userData = plot;
 
   viewer.scene.add(sprite);
@@ -172,137 +139,123 @@ function addPlot(plot) {
 }
 
 /***********************
- * ADD LOCATION MARKER (PIN)
+ * ADD LOCATION (NON-CLICKABLE)
  ***********************/
-
 function addLocationMarker(data) {
-
   const material = new THREE.SpriteMaterial({
-    map: createLocationMarkerTexture(data.name, "#ff3b3b"),
+    map: createLocationMarkerTexture(data.name),
     transparent: true,
-    depthTest: false,
-    depthWrite: false
+    depthTest: false
   });
 
   const marker = new THREE.Sprite(material);
-
   marker.position.set(...data.position);
+  marker.scale.set(400, 400, 1);
 
-  // LABEL + STEM + DOT visible properly
-  marker.scale.set(360, 420, 1);
-
-  marker.isLocationMarker = true;
-  marker.userData = data;
-
+  marker.ignoreClick = true; // 🚫 no click
   viewer.scene.add(marker);
   locationMarkers.push(marker);
 }
 
-
 /***********************
- * FETCH PLOTS
+ * FETCH DATA
  ***********************/
 fetch(PLOT_SHEET_URL)
-  .then(res => res.text())
+  .then(r => r.text())
   .then(csv => {
-    const rows = csv.split("\n").slice(1);
-    rows.forEach(row => {
+    csv.split("\n").slice(1).forEach(row => {
       if (!row.trim()) return;
       const [plot, status, size, remarks, x, y, z] = row.split(",");
       addPlot({
-        plot: plot.trim(),
-        status: status.trim(),
-        size: size.trim(),
-        remarks: remarks.trim(),
+        plot, status, size, remarks,
         position: [parseFloat(x), parseFloat(y), parseFloat(z)]
       });
     });
   });
 
-/***********************
- * FETCH LOCATIONS (INDEPENDENT)
- ***********************/
 fetch(LOCATION_SHEET_URL)
-  .then(res => res.text())
+  .then(r => r.text())
   .then(csv => {
-    const rows = csv.split("\n").slice(1);
-    rows.forEach(row => {
+    csv.split("\n").slice(1).forEach(row => {
       if (!row.trim()) return;
       const [name, remarks, x, y, z] = row.split(",");
       addLocationMarker({
-        name: name.trim(),
-        remarks: remarks.trim(),
+        name, remarks,
         position: [parseFloat(x), parseFloat(y), parseFloat(z)]
       });
     });
   });
 
 /***********************
- * SEARCH (PLOTS ONLY)
+ * SEARCH & FILTER
  ***********************/
 document.getElementById("searchBox").addEventListener("input", e => {
-  const value = e.target.value.toLowerCase();
+  const v = e.target.value.toLowerCase();
   plotCircles.forEach(p => {
-    p.visible = p.plotNo.toLowerCase().includes(value);
+    p.visible = p.userData.plot.toLowerCase().includes(v);
   });
 });
 
-/***********************
- * FILTER (PLOTS ONLY)
- ***********************/
-document.querySelectorAll(".filter input").forEach(box => {
-  box.addEventListener("change", () => {
-    const active = Array.from(
-      document.querySelectorAll(".filter input:checked")
-    ).map(i => i.dataset.status);
-
+document.querySelectorAll(".filter input").forEach(cb => {
+  cb.addEventListener("change", () => {
+    const active = [...document.querySelectorAll(".filter input:checked")]
+      .map(i => i.dataset.status);
     plotCircles.forEach(p => {
-      p.visible = active.includes(p.status);
+      p.visible = active.includes(p.userData.status);
     });
   });
 });
 
 /***********************
- * HOVER & CLICK (BOTH)
+ * CLICK / TAP (PLOTS ONLY)
  ***********************/
 const mouse = new THREE.Vector2();
 
-container.addEventListener("mousemove", e => {
+function handleInteraction(clientX, clientY) {
   const rect = container.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
   viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
   const hits = viewer.raycaster.intersectObjects(
     [...plotCircles, ...locationMarkers],
     true
   );
 
-  container.style.cursor = hits.length ? "pointer" : "move";
-});
+  const hit = hits.find(h => !h.object.ignoreClick);
+  if (!hit) return;
 
+  showPlotCard(hit.object.userData);
+}
+
+// desktop
 container.addEventListener("click", e => {
-  const rect = container.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-  viewer.raycaster.setFromCamera(mouse, viewer.camera);
-  const hits = viewer.raycaster.intersectObjects(
-    [...plotCircles, ...locationMarkers],
-    true
-  );
-
-  if (!hits.length) return;
-
-  const obj = hits[0].object;
-
-  if (obj.isLocationMarker) {
-    alert(obj.userData.name + " - " + obj.userData.remarks);
-    return;
-  }
-
-  showPlotCard(obj.userData);
+  handleInteraction(e.clientX, e.clientY);
 });
+
+// mobile
+let sx = 0, sy = 0, dragging = false;
+
+container.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  sx = t.clientX;
+  sy = t.clientY;
+  dragging = false;
+}, { passive: true });
+
+container.addEventListener("touchmove", e => {
+  const t = e.touches[0];
+  if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) {
+    dragging = true;
+  }
+}, { passive: true });
+
+container.addEventListener("touchend", e => {
+  if (dragging) return;
+  const t = e.changedTouches[0];
+  handleInteraction(t.clientX, t.clientY);
+}, { passive: true });
 
 /***********************
  * CARD
@@ -316,208 +269,6 @@ function showPlotCard(plot) {
   plotCard.classList.remove("hidden");
 }
 
-closeCard.addEventListener("click", e => {
-  e.stopPropagation();
+closeCard.addEventListener("click", () => {
   plotCard.classList.add("hidden");
 });
-
-
-// 
-
-const IS_MOBILE = window.innerWidth < 768 || 'ontouchstart' in window;
-
-if (IS_MOBILE) {
-  plotCircles.forEach(p => {
-    p.scale.set(80, 80, 1); // bigger for finger
-  });
-}
-
-if (IS_MOBILE) {
-  locationMarkers.forEach(m => {
-    m.scale.set(180, 260, 1);
-  });
-}
-
-
-
-container.addEventListener("touchstart", e => {
-  const t = e.touches[0];
-  touchStartX = t.clientX;
-  touchStartY = t.clientY;
-}, { passive: true });
-
-container.addEventListener("touchend", e => {
-  const t = e.changedTouches[0];
-  const dx = Math.abs(t.clientX - touchStartX);
-  const dy = Math.abs(t.clientY - touchStartY);
-
-  // 👆 small movement = TAP
-  if (dx < 10 && dy < 10) {
-    handleMobileTap(t.clientX, t.clientY);
-  }
-});
-
-function handleMobileTap(clientX, clientY) {
-  const rect = container.getBoundingClientRect();
-  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-  viewer.raycaster.setFromCamera(mouse, viewer.camera);
-
-  const hits = viewer.raycaster.intersectObjects(
-    [...plotCircles, ...locationMarkers],
-    true
-  );
-
-  if (!hits.length) return;
-
-  const obj = hits[0].object;
-
-  if (obj.isLocationMarker) {
-    alert(obj.userData.name);
-    return;
-  }
-
-  showPlotCard(obj.userData);
-}
-
-if (IS_MOBILE) {
-  container.style.cursor = "default";
-}
-
-if (IS_MOBILE) {
-  viewer.renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 1.5)
-  );
-}
-
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => {
-    viewer.onWindowResize();
-  }, 300);
-});
-
-function disableLocationClicks() {
-  locationMarkers.forEach(m => {
-    m.ignoreClick = true; // custom flag
-  });
-}
-
-setTimeout(disableLocationClicks, 500);
-
-function getFirstClickableObject(hits) {
-  for (let i = 0; i < hits.length; i++) {
-    const obj = hits[i].object;
-    if (obj.ignoreClick) continue; // 🚫 skip location
-    return obj;
-  }
-  return null;
-}
-
-function handleMobileTap(clientX, clientY) {
-  const rect = container.getBoundingClientRect();
-  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-  viewer.raycaster.setFromCamera(mouse, viewer.camera);
-
-  const hits = viewer.raycaster.intersectObjects(
-    [...plotCircles, ...locationMarkers],
-    true
-  );
-
-  const obj = getFirstClickableObject(hits);
-  if (!obj) return;
-
-  showPlotCard(obj.userData);
-}
-
-container.addEventListener("click", e => {
-  const rect = container.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-  viewer.raycaster.setFromCamera(mouse, viewer.camera);
-
-  const hits = viewer.raycaster.intersectObjects(
-    [...plotCircles, ...locationMarkers],
-    true
-  );
-
-  const obj = getFirstClickableObject(hits);
-  if (!obj) return;
-
-  showPlotCard(obj.userData);
-});
-
-let touchStartX = 0;
-let touchStartY = 0;
-let isDragging = false;
-
-container.addEventListener(
-  "touchstart",
-  e => {
-    const t = e.touches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    isDragging = false;
-  },
-  { passive: true }
-);
-
-container.addEventListener(
-  "touchmove",
-  e => {
-    const t = e.touches[0];
-    const dx = Math.abs(t.clientX - touchStartX);
-    const dy = Math.abs(t.clientY - touchStartY);
-
-    // agar finger move ho rahi hai → swipe/rotate
-    if (dx > 10 || dy > 10) {
-      isDragging = true;
-    }
-  },
-  { passive: true }
-);
-
-container.addEventListener(
-  "touchend",
-  e => {
-    if (isDragging) return; // 🔥 swipe ko ignore
-
-    const t = e.changedTouches[0];
-    handleMobileTap(t.clientX, t.clientY);
-  },
-  { passive: true }
-);
-
-container.addEventListener(
-  "touchend",
-  e => {
-    if (isDragging) return; // 🔥 swipe ko ignore
-
-    const t = e.changedTouches[0];
-    handleMobileTap(t.clientX, t.clientY);
-  },
-  { passive: true }
-);
-
-function handleMobileTap(clientX, clientY) {
-  const rect = container.getBoundingClientRect();
-  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-  viewer.raycaster.setFromCamera(mouse, viewer.camera);
-
-  const hits = viewer.raycaster.intersectObjects(
-    [...plotCircles, ...locationMarkers],
-    true
-  );
-
-  // location clicks already disabled
-  const hit = hits.find(h => !h.object.ignoreClick);
-  if (!hit) return;
-
-  showPlotCard(hit.object.userData);
-}
-
