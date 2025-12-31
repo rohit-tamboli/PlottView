@@ -397,3 +397,56 @@ window.addEventListener("orientationchange", () => {
     viewer.onWindowResize();
   }, 300);
 });
+
+function disableLocationClicks() {
+  locationMarkers.forEach(m => {
+    m.ignoreClick = true; // custom flag
+  });
+}
+
+setTimeout(disableLocationClicks, 500);
+
+function getFirstClickableObject(hits) {
+  for (let i = 0; i < hits.length; i++) {
+    const obj = hits[i].object;
+    if (obj.ignoreClick) continue; // 🚫 skip location
+    return obj;
+  }
+  return null;
+}
+
+function handleMobileTap(clientX, clientY) {
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(
+    [...plotCircles, ...locationMarkers],
+    true
+  );
+
+  const obj = getFirstClickableObject(hits);
+  if (!obj) return;
+
+  showPlotCard(obj.userData);
+}
+
+container.addEventListener("click", e => {
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(
+    [...plotCircles, ...locationMarkers],
+    true
+  );
+
+  const obj = getFirstClickableObject(hits);
+  if (!obj) return;
+
+  showPlotCard(obj.userData);
+});
