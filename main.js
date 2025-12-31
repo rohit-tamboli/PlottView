@@ -28,7 +28,7 @@ const panorama = new PANOLENS.ImagePanorama("images/panorama.jpg");
 const viewer = new PANOLENS.Viewer({
   container,
   autoRotate: true,
-  autoRotateSpeed: 0.3
+  autoRotateSpeed: 0.3,
 });
 
 viewer.add(panorama);
@@ -62,7 +62,8 @@ function createCircleTexture(color) {
 }
 
 function createLocationMarkerTexture(label, color = "#ff3b3b") {
-  const w = 256, h = 256;
+  const w = 256,
+    h = 256;
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
@@ -124,7 +125,7 @@ function addPlot(plot) {
   const material = new THREE.SpriteMaterial({
     map: createCircleTexture(colorCss),
     transparent: true,
-    depthTest: false
+    depthTest: false,
   });
 
   const sprite = new THREE.Sprite(material);
@@ -145,7 +146,7 @@ function addLocationMarker(data) {
   const material = new THREE.SpriteMaterial({
     map: createLocationMarkerTexture(data.name),
     transparent: true,
-    depthTest: false
+    depthTest: false,
   });
 
   const marker = new THREE.Sprite(material);
@@ -161,46 +162,57 @@ function addLocationMarker(data) {
  * FETCH DATA
  ***********************/
 fetch(PLOT_SHEET_URL)
-  .then(r => r.text())
-  .then(csv => {
-    csv.split("\n").slice(1).forEach(row => {
-      if (!row.trim()) return;
-      const [plot, status, size, remarks, x, y, z] = row.split(",");
-      addPlot({
-        plot, status, size, remarks,
-        position: [parseFloat(x), parseFloat(y), parseFloat(z)]
+  .then((r) => r.text())
+  .then((csv) => {
+    csv
+      .split("\n")
+      .slice(1)
+      .forEach((row) => {
+        if (!row.trim()) return;
+        const [plot, status, size, remarks, x, y, z] = row.split(",");
+        addPlot({
+          plot,
+          status,
+          size,
+          remarks,
+          position: [parseFloat(x), parseFloat(y), parseFloat(z)],
+        });
       });
-    });
   });
 
 fetch(LOCATION_SHEET_URL)
-  .then(r => r.text())
-  .then(csv => {
-    csv.split("\n").slice(1).forEach(row => {
-      if (!row.trim()) return;
-      const [name, remarks, x, y, z] = row.split(",");
-      addLocationMarker({
-        name, remarks,
-        position: [parseFloat(x), parseFloat(y), parseFloat(z)]
+  .then((r) => r.text())
+  .then((csv) => {
+    csv
+      .split("\n")
+      .slice(1)
+      .forEach((row) => {
+        if (!row.trim()) return;
+        const [name, remarks, x, y, z] = row.split(",");
+        addLocationMarker({
+          name,
+          remarks,
+          position: [parseFloat(x), parseFloat(y), parseFloat(z)],
+        });
       });
-    });
   });
 
 /***********************
  * SEARCH & FILTER
  ***********************/
-document.getElementById("searchBox").addEventListener("input", e => {
+document.getElementById("searchBox").addEventListener("input", (e) => {
   const v = e.target.value.toLowerCase();
-  plotCircles.forEach(p => {
+  plotCircles.forEach((p) => {
     p.visible = p.userData.plot.toLowerCase().includes(v);
   });
 });
 
-document.querySelectorAll(".filter input").forEach(cb => {
+document.querySelectorAll(".filter input").forEach((cb) => {
   cb.addEventListener("change", () => {
-    const active = [...document.querySelectorAll(".filter input:checked")]
-      .map(i => i.dataset.status);
-    plotCircles.forEach(p => {
+    const active = [...document.querySelectorAll(".filter input:checked")].map(
+      (i) => i.dataset.status
+    );
+    plotCircles.forEach((p) => {
       p.visible = active.includes(p.userData.status);
     });
   });
@@ -209,7 +221,7 @@ document.querySelectorAll(".filter input").forEach(cb => {
 /***********************
  * HOVER CURSOR (PLOTS ONLY)
  ***********************/
-container.addEventListener("mousemove", e => {
+container.addEventListener("mousemove", (e) => {
   const rect = container.getBoundingClientRect();
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -222,11 +234,10 @@ container.addEventListener("mousemove", e => {
   );
 
   // 🔥 sirf plot par pointer
-  const plotHit = hits.find(h => !h.object.ignoreClick);
+  const plotHit = hits.find((h) => !h.object.ignoreClick);
 
   container.style.cursor = plotHit ? "pointer" : "move";
 });
-
 
 /***********************
  * CLICK / TAP (PLOTS ONLY)
@@ -245,39 +256,62 @@ function handleInteraction(clientX, clientY) {
     true
   );
 
-  const hit = hits.find(h => !h.object.ignoreClick);
+  const hit = hits.find((h) => !h.object.ignoreClick);
+  
   if (!hit) return;
 
-  showPlotCard(hit.object.userData);
+  const plot = hit.object.userData;
+
+  // 🔥 X Y Z PRINT
+  console.log("Plot:", plot.plot);
+  console.log("X:", plot.position[0]);
+  console.log("Y:", plot.position[1]);
+  console.log("Z:", plot.position[2]);
+
+  showPlotCard(plot);
 }
 
 // desktop
-container.addEventListener("click", e => {
+container.addEventListener("click", (e) => {
   handleInteraction(e.clientX, e.clientY);
 });
 
 // mobile
-let sx = 0, sy = 0, dragging = false;
-
-container.addEventListener("touchstart", e => {
-  const t = e.touches[0];
-  sx = t.clientX;
-  sy = t.clientY;
+let sx = 0,
+  sy = 0,
   dragging = false;
-}, { passive: true });
 
-container.addEventListener("touchmove", e => {
-  const t = e.touches[0];
-  if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) {
-    dragging = true;
-  }
-}, { passive: true });
+container.addEventListener(
+  "touchstart",
+  (e) => {
+    const t = e.touches[0];
+    sx = t.clientX;
+    sy = t.clientY;
+    dragging = false;
+  },
+  { passive: true }
+);
 
-container.addEventListener("touchend", e => {
-  if (dragging) return;
-  const t = e.changedTouches[0];
-  handleInteraction(t.clientX, t.clientY);
-}, { passive: true });
+container.addEventListener(
+  "touchmove",
+  (e) => {
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) {
+      dragging = true;
+    }
+  },
+  { passive: true }
+);
+
+container.addEventListener(
+  "touchend",
+  (e) => {
+    if (dragging) return;
+    const t = e.changedTouches[0];
+    handleInteraction(t.clientX, t.clientY);
+  },
+  { passive: true }
+);
 
 /***********************
  * CARD
