@@ -338,8 +338,7 @@ if (IS_MOBILE) {
   });
 }
 
-let touchStartX = 0;
-let touchStartY = 0;
+
 
 container.addEventListener("touchstart", e => {
   const t = e.touches[0];
@@ -450,3 +449,75 @@ container.addEventListener("click", e => {
 
   showPlotCard(obj.userData);
 });
+
+let touchStartX = 0;
+let touchStartY = 0;
+let isDragging = false;
+
+container.addEventListener(
+  "touchstart",
+  e => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    isDragging = false;
+  },
+  { passive: true }
+);
+
+container.addEventListener(
+  "touchmove",
+  e => {
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - touchStartX);
+    const dy = Math.abs(t.clientY - touchStartY);
+
+    // agar finger move ho rahi hai → swipe/rotate
+    if (dx > 10 || dy > 10) {
+      isDragging = true;
+    }
+  },
+  { passive: true }
+);
+
+container.addEventListener(
+  "touchend",
+  e => {
+    if (isDragging) return; // 🔥 swipe ko ignore
+
+    const t = e.changedTouches[0];
+    handleMobileTap(t.clientX, t.clientY);
+  },
+  { passive: true }
+);
+
+container.addEventListener(
+  "touchend",
+  e => {
+    if (isDragging) return; // 🔥 swipe ko ignore
+
+    const t = e.changedTouches[0];
+    handleMobileTap(t.clientX, t.clientY);
+  },
+  { passive: true }
+);
+
+function handleMobileTap(clientX, clientY) {
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(
+    [...plotCircles, ...locationMarkers],
+    true
+  );
+
+  // location clicks already disabled
+  const hit = hits.find(h => !h.object.ignoreClick);
+  if (!hit) return;
+
+  showPlotCard(hit.object.userData);
+}
+
