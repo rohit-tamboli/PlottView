@@ -207,6 +207,28 @@ document.querySelectorAll(".filter input").forEach(cb => {
 });
 
 /***********************
+ * HOVER CURSOR (PLOTS ONLY)
+ ***********************/
+container.addEventListener("mousemove", e => {
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(
+    [...plotCircles, ...locationMarkers],
+    true
+  );
+
+  // 🔥 sirf plot par pointer
+  const plotHit = hits.find(h => !h.object.ignoreClick);
+
+  container.style.cursor = plotHit ? "pointer" : "move";
+});
+
+
+/***********************
  * CLICK / TAP (PLOTS ONLY)
  ***********************/
 const mouse = new THREE.Vector2();
