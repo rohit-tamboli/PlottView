@@ -1,0 +1,180 @@
+const CIRCLE_SCREEN_SIZE = 40; // pixels (adjust as you like)
+
+let infospots = [];
+
+// DOM
+const container = document.querySelector('.image-container');
+const plotCard = document.getElementById('plotCard');
+const cardPlot = document.getElementById('cardPlot');
+const cardSize = document.getElementById('cardSize');
+const cardStatus = document.getElementById('cardStatus');
+const cardRemarks = document.getElementById('cardRemarks');
+
+// PANORAMA
+const panorama = new PANOLENS.ImagePanorama('images/panorama.jpg');
+
+const viewer = new PANOLENS.Viewer({
+  container: container,
+  autoRotate: true,
+  autoRotateSpeed: 0.3
+});
+
+viewer.add(panorama);
+
+// 🔥 keep circles always round
+// viewer.addUpdateCallback(() => {
+//   infospots.forEach(circle => {
+//     circle.lookAt(viewer.camera.position);
+//   });
+// });
+
+// GOOGLE SHEET CSV
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4kxCdoeLrM_mn4SxCkoalBkZHYASdwrCUiuKZsBMX5TrUKZePAy5gmZlOuaRAG6-LYFL6SEtJ3HK3/pub?gid=0&single=true&output=csv";
+
+fetch(SHEET_URL)
+  .then(res => res.text())
+  .then(csv => {
+    const rows = csv.split("\n").slice(1);
+
+    rows.forEach(row => {
+      if (!row.trim()) return;
+
+      const [plot, status, size, remarks, x, y, z] = row.split(",");
+
+      addPlot({
+        plot: plot.trim(),
+        status: status.trim(),
+        size: size.trim(),
+        remarks: remarks.trim(),
+        position: [parseFloat(x), parseFloat(y), parseFloat(z)]
+      });
+    });
+  });
+
+// COLOR
+function getColor(status) {
+  if (status === "Booked") return 0xff0000;
+  if (status === "Available") return 0x0000ff;
+  if (status === "Ongoing") return 0xffff00;
+  return 0xffffff;
+}
+
+// STATUS TEXT COLOR
+function getStatusColor(status) {
+  if (status === "Booked") return "red";
+  if (status === "Available") return "blue";
+  if (status === "Ongoing") return "orange";
+  return "black";
+}
+
+// ADD CIRCLE
+function addPlot(plot) {
+
+  const geometry = new THREE.CircleGeometry(40, 32);
+  const material = new THREE.MeshBasicMaterial({
+    color: getColor(plot.status),
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    depthTest: false
+  });
+
+  const circle = new THREE.Mesh(geometry, material);
+  circle.position.set(...plot.position);
+  circle.frustumCulled = false;
+
+  circle.plotNo = plot.plot;
+  circle.status = plot.status;
+  circle.userData = plot;
+
+  viewer.scene.add(circle);
+  infospots.push(circle);
+}
+
+// SEARCH
+document.getElementById('searchBox').addEventListener('input', e => {
+  const value = e.target.value.toLowerCase();
+  infospots.forEach(c => {
+    c.visible = c.plotNo.toLowerCase().includes(value);
+  });
+});
+
+// FILTER
+document.querySelectorAll('.filter input').forEach(box => {
+  box.addEventListener('change', () => {
+    const active = Array.from(
+      document.querySelectorAll('.filter input:checked')
+    ).map(i => i.dataset.status);
+
+    infospots.forEach(c => {
+      c.visible = active.includes(c.status);
+    });
+  });
+});
+
+// CLICK DETECTION
+const mouse = new THREE.Vector2();
+
+function updateCircles() {
+
+  infospots.forEach(circle => {
+
+    // always face camera
+    circle.quaternion.copy(viewer.camera.quaternion);
+
+    // keep same screen size
+    const distance = viewer.camera.position.distanceTo(circle.position);
+    const vFOV = THREE.MathUtils.degToRad(viewer.camera.fov);
+
+    const scale =
+      2 * Math.tan(vFOV / 2) *
+      distance *
+      (CIRCLE_SCREEN_SIZE / window.innerHeight);
+
+    circle.scale.set(scale, scale, scale);
+  });
+
+  requestAnimationFrame(updateCircles);
+}
+
+// 🔥 start loop AFTER viewer is ready
+viewer.addEventListener('load', () => {
+  updateCircles();
+});
+
+
+// CARD
+function showPlotCard(plot) {
+  cardPlot.innerText = `Plot: ${plot.plot}`;
+  cardSize.innerText = plot.size;
+  cardStatus.innerText = plot.status;
+  cardStatus.style.color = getStatusColor(plot.status);
+  cardRemarks.innerText = plot.remarks;
+  plotCard.classList.remove('hidden');
+}
+
+viewer.container.addEventListener('mousemove', (e) => {
+
+  const rect = viewer.container.getBoundingClientRect();
+
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  viewer.raycaster.setFromCamera(mouse, viewer.camera);
+
+  const hits = viewer.raycaster.intersectObjects(infospots, true);
+
+  if (hits.length > 0) {
+    viewer.container.style.cursor = 'pointer'; // 👆 hand
+  } else {
+    viewer.container.style.cursor = 'move'; // default
+  }
+});
+
+const closeCard = document.getElementById('closeCard');
+
+closeCard.addEventListener('click', () => {
+    
+  plotCard.classList.add('hidden');
+});

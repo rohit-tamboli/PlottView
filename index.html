@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>360 Plot Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Search box -->
+<input type="text" id="searchBox" placeholder="Search Plot No">
+
+<!-- Filter buttons -->
+<div class="filter">
+  <label><input type="checkbox" checked data-status="Available"> Available</label><br>
+  <label><input type="checkbox" checked data-status="Booked"> Booked</label><br>
+  <label><input type="checkbox" checked data-status="Ongoing"> Ongoing</label>
+</div>
+
+<!-- 360 View -->
+<div class="image-container"></div>
+
+<!-- Plot Info Card -->
+<div id="plotCard" class="plot-card hidden">
+  
+
+  <h4 id="cardPlot"></h4>
+  <p><b>Size:</b> <span id="cardSize"></span></p>
+  <p><b>Status:</b> <span id="cardStatus"></span></p>
+  <p><b>Status:</b> <span id="cardRemarks"></span></p>
+  <button id="closeCard" class="close-btn">Close</button>
+  
+</div>
+
+
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/105/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/panolens@0.12.0/build/panolens.min.js"></script>
+
+
+<script src="main.js"></script>
+
+</body>
+</html>
