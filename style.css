@@ -71,3 +71,21 @@ canvas {
 .close-btn:hover {
   color: #000;
 }
+
+/* whatsapp */
+
+#whatsapp-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 55px;
+  width: 30px;
+  height: 30px;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+#whatsapp-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

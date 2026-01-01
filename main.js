@@ -42,11 +42,6 @@ viewer.addUpdateCallback(() => {
     mesh.rotation.z = 0;
   });
 
-  // 🔄 LOCATIONS → NATURAL PANORAMA ROTATION
-  // ❌ lookAt MAT lagao
-  // ❌ rotation lock MAT lagao
-  // kuch bhi nahi karo
-
 });
 
 
@@ -362,3 +357,8 @@ function showPlotCard(plot) {
 closeCard.addEventListener("click", () => {
   plotCard.classList.add("hidden");
 });
+
+
+// whatsapp 
+initWhatsAppButton(panorama, viewer, container);
+
