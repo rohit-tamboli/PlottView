@@ -124,6 +124,7 @@ function addPlot(plot) {
   const material = new THREE.MeshBasicMaterial({
     map: createSquareTexture(colorCss),
     transparent: true,
+    opacity: 0,          // 👈 invisible
     depthTest: false
   });
 
@@ -137,7 +138,7 @@ function addPlot(plot) {
   mesh.userData = plot;
   mesh.ignoreClick = false;
 
-  mesh.visible = false; // 🔥 DEFAULT HIDDEN
+  mesh.visible = true; // 🔥 DEFAULT HIDDEN
 
   viewer.scene.add(mesh);
   plotCircles.push(mesh);
@@ -206,22 +207,43 @@ document.getElementById("searchBox").addEventListener("input", e => {
  * FILTER (CHECKED ONLY)
  ***********************/
 document.querySelectorAll(".filter input").forEach(cb => {
-  cb.checked = false; // 🔥 default unchecked
-
   cb.addEventListener("change", () => {
-    const active = [...document.querySelectorAll(".filter input:checked")]
-      .map(i => i.dataset.status);
 
-    if (active.length === 0) {
-      plotCircles.forEach(p => p.visible = false);
+    // jo checked hain
+    const activeStatuses = [
+      ...document.querySelectorAll(".filter input:checked")
+    ].map(i => i.dataset.status);
+
+    // agar kuch bhi checked nahi
+    if (activeStatuses.length === 0) {
+      plotCircles.forEach(p => {
+        p.material.opacity = 0;   // ❌ hide
+      });
       return;
     }
 
     plotCircles.forEach(p => {
-      p.visible = active.includes(p.userData.status);
+      if (activeStatuses.includes(p.userData.status)) {
+        p.material.opacity = 1;   // ✅ show
+      } else {
+        p.material.opacity = 0;   // ❌ hide
+      }
     });
+
   });
 });
+
+
+// sab checkbox unchecked
+document.querySelectorAll(".filter input").forEach(cb => {
+  cb.checked = false;
+});
+
+// sab plots invisible
+plotCircles.forEach(p => {
+  p.material.opacity = 0;
+});
+
 
 /***********************
  * INTERACTION
