@@ -263,5 +263,36 @@ closeCard.addEventListener("click", () =>
   plotCard.classList.add("hidden")
 );
 
+let touchStartX = 0;
+let touchStartY = 0;
+let isDragging = false;
+
+container.addEventListener("touchstart", (e) => {
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  isDragging = false;
+}, { passive: true });
+
+container.addEventListener("touchmove", (e) => {
+  const t = e.touches[0];
+  const dx = Math.abs(t.clientX - touchStartX);
+  const dy = Math.abs(t.clientY - touchStartY);
+
+  // agar finger thoda bhi move hua → drag
+  if (dx > 8 || dy > 8) {
+    isDragging = true;
+  }
+}, { passive: true });
+
+container.addEventListener("touchend", (e) => {
+  // agar drag hua → click ignore
+  if (isDragging) return;
+
+  const t = e.changedTouches[0];
+  handleInteraction(t.clientX, t.clientY);
+}, { passive: true });
+
+
 // WhatsApp
 initWhatsAppButton(panorama, viewer, container);
