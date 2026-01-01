@@ -35,14 +35,20 @@ viewer.add(panorama);
 container.style.cursor = "move";
 
 viewer.addUpdateCallback(() => {
-  plotCircles.forEach(mesh => {
-    // face camera
-    mesh.lookAt(viewer.camera.position);
 
-    // 🔒 REMOVE CAMERA ROLL
+  // 🔒 PLOTS → camera face + upright
+  plotCircles.forEach(mesh => {
+    mesh.lookAt(viewer.camera.position);
     mesh.rotation.z = 0;
   });
+
+  // 🔄 LOCATIONS → NATURAL PANORAMA ROTATION
+  // ❌ lookAt MAT lagao
+  // ❌ rotation lock MAT lagao
+  // kuch bhi nahi karo
+
 });
+
 
 
 
@@ -108,10 +114,10 @@ function createLocationMarkerTexture(label, color = "#ff3b3b") {
   ctx.stroke();
 
   // DOT
-  ctx.beginPath();
-  ctx.arc(w / 2, h - 45, 18, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
+  // ctx.beginPath();
+  // ctx.arc(w / 2, h - 45, 18, 0, Math.PI * 2);
+  // ctx.fillStyle = color;
+  // ctx.fill();
 
   return new THREE.CanvasTexture(canvas);
 }
@@ -162,26 +168,28 @@ function addPlot(plot) {
 /***********************
  * ADD LOCATION (NON-CLICKABLE)
  ***********************/
+
 function addLocationMarker(data) {
 
-  const material = new THREE.MeshBasicMaterial({
+  const material = new THREE.SpriteMaterial({
     map: createLocationMarkerTexture(data.name),
     transparent: true,
     depthTest: false
   });
 
-  const geometry = new THREE.PlaneGeometry(1, 1);
-  const mesh = new THREE.Mesh(geometry, material);
+  const sprite = new THREE.Sprite(material);
 
-  mesh.position.set(...data.position);
-  mesh.scale.set(400, 400, 1);
+  sprite.position.set(...data.position);
+  sprite.scale.set(400, 400, 1);
 
-  mesh.ignoreClick = true; // 🚫 no click
-  mesh.userData = data;
+  sprite.ignoreClick = true;
+  sprite.userData = data;
 
-  viewer.scene.add(mesh);
-  locationMarkers.push(mesh);
+  panorama.add(sprite);   // 🔥 important
+
+  locationMarkers.push(sprite);
 }
+
 
 
 /***********************
