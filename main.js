@@ -1,7 +1,7 @@
 /***********************
  * CONFIG
  ***********************/
-const CIRCLE_SCREEN_SIZE = 40;
+const CIRCLE_SCREEN_SIZE = 100;
 
 /***********************
  * GLOBALS
@@ -34,6 +34,19 @@ const viewer = new PANOLENS.Viewer({
 viewer.add(panorama);
 container.style.cursor = "move";
 
+viewer.addUpdateCallback(() => {
+  plotCircles.forEach(mesh => {
+    // face camera
+    mesh.lookAt(viewer.camera.position);
+
+    // 🔒 REMOVE CAMERA ROLL
+    mesh.rotation.z = 0;
+  });
+});
+
+
+
+
 /***********************
  * SHEET URLS
  ***********************/
@@ -46,20 +59,25 @@ const LOCATION_SHEET_URL =
 /***********************
  * TEXTURES
  ***********************/
-function createCircleTexture(color) {
+function createSquareTexture(color) {
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
 
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+  // square
   ctx.fillStyle = color;
-  ctx.fill();
+  ctx.fillRect(8, 8, size - 16, size - 16);
+
+  // optional white border
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(8, 8, size - 16, size - 16);
 
   return new THREE.CanvasTexture(canvas);
 }
+
 
 function createLocationMarkerTexture(label, color = "#ff3b3b") {
   const w = 256,
@@ -122,41 +140,49 @@ function addPlot(plot) {
   const colorHex = getColor(plot.status);
   const colorCss = "#" + colorHex.toString(16).padStart(6, "0");
 
-  const material = new THREE.SpriteMaterial({
-    map: createCircleTexture(colorCss),
+  const material = new THREE.MeshBasicMaterial({
+    map: createSquareTexture(colorCss),
     transparent: true,
-    depthTest: false,
+    depthTest: false
   });
 
-  const sprite = new THREE.Sprite(material);
-  sprite.position.set(...plot.position);
-  sprite.scale.set(CIRCLE_SCREEN_SIZE, CIRCLE_SCREEN_SIZE, 1);
+  const geometry = new THREE.PlaneGeometry(1, 1);
+  const mesh = new THREE.Mesh(geometry, material);
 
-  sprite.ignoreClick = false;
-  sprite.userData = plot;
+  mesh.position.set(...plot.position);
+  mesh.scale.set(CIRCLE_SCREEN_SIZE, CIRCLE_SCREEN_SIZE, 1);
 
-  viewer.scene.add(sprite);
-  plotCircles.push(sprite);
+  mesh.ignoreClick = false;
+  mesh.userData = plot;
+
+  viewer.scene.add(mesh);
+  plotCircles.push(mesh);
 }
 
 /***********************
  * ADD LOCATION (NON-CLICKABLE)
  ***********************/
 function addLocationMarker(data) {
-  const material = new THREE.SpriteMaterial({
+
+  const material = new THREE.MeshBasicMaterial({
     map: createLocationMarkerTexture(data.name),
     transparent: true,
-    depthTest: false,
+    depthTest: false
   });
 
-  const marker = new THREE.Sprite(material);
-  marker.position.set(...data.position);
-  marker.scale.set(400, 400, 1);
+  const geometry = new THREE.PlaneGeometry(1, 1);
+  const mesh = new THREE.Mesh(geometry, material);
 
-  marker.ignoreClick = true; // 🚫 no click
-  viewer.scene.add(marker);
-  locationMarkers.push(marker);
+  mesh.position.set(...data.position);
+  mesh.scale.set(400, 400, 1);
+
+  mesh.ignoreClick = true; // 🚫 no click
+  mesh.userData = data;
+
+  viewer.scene.add(mesh);
+  locationMarkers.push(mesh);
 }
+
 
 /***********************
  * FETCH DATA
