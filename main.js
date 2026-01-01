@@ -1,7 +1,7 @@
 /***********************
  * CONFIG
  ***********************/
-const CIRCLE_SCREEN_SIZE = 40;
+const CIRCLE_SCREEN_SIZE = 80;
 
 /***********************
  * GLOBALS
@@ -46,20 +46,32 @@ const LOCATION_SHEET_URL =
 /***********************
  * TEXTURES
  ***********************/
-function createCircleTexture(color) {
+function createSquareTexture(color, text) {
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
 
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+  // square background
   ctx.fillStyle = color;
-  ctx.fill();
+  ctx.fillRect(8, 8, size - 16, size - 16);
+
+  // optional border
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(8, 8, size - 16, size - 16);
+
+  // plot number text
+  // ctx.font = "bold 26px Arial";
+  // ctx.fillStyle = "#ffffff";
+  // ctx.textAlign = "center";
+  // ctx.textBaseline = "middle";
+  // ctx.fillText(text, size / 2, size / 2);
 
   return new THREE.CanvasTexture(canvas);
 }
+
 
 function createLocationMarkerTexture(label, color = "#ff3b3b") {
   const w = 256,
@@ -123,7 +135,7 @@ function addPlot(plot) {
   const colorCss = "#" + colorHex.toString(16).padStart(6, "0");
 
   const material = new THREE.SpriteMaterial({
-    map: createCircleTexture(colorCss),
+    map: createSquareTexture(colorCss),
     transparent: true,
     depthTest: false,
   });
@@ -257,7 +269,7 @@ function handleInteraction(clientX, clientY) {
   );
 
   const hit = hits.find((h) => !h.object.ignoreClick);
-  
+
   if (!hit) return;
 
   const plot = hit.object.userData;
