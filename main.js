@@ -9,8 +9,9 @@ const CIRCLE_SCREEN_SIZE = 100;
 let plotCircles = [];
 let locationMarkers = [];
 
-let activePlot = null;
-let blinkInterval = null;
+let activePlotMesh = null;
+let activeBlinkInterval = null;
+
 
 /***********************
  * DOM
@@ -332,14 +333,16 @@ function handleInteraction(x, y) {
 
   if (!hit) return;
 
-  const mesh = hit.object;
-  const plot = mesh.userData;
+const mesh = hit.object;
+const plot = mesh.userData;
 
-  // 🔥 blink + highlight
-  blinkAndHighlightPlot(mesh);
+// ⭐ highlight + blink
+highlightAndBlink(mesh);
 
-  // card show
-  showPlotCard(plot);
+// show card
+showPlotCard(plot);
+
+
 }
 
 container.addEventListener("click", (e) =>
@@ -435,35 +438,48 @@ floatingSearch.addEventListener("input", (e) => {
   });
 });
 
-function blinkAndHighlightPlot(mesh) {
-  // pehle wala plot normal karo
-  if (activePlot && activePlot !== mesh) {
-    activePlot.material.opacity = 1;
-    activePlot.material.color.set(0xffffff);
+
+// HIGHLIGHT & BLINK FUNCTION
+
+function highlightAndBlink(mesh) {
+
+  // 🔥 agar koi purana plot active hai
+  if (activePlotMesh && activePlotMesh !== mesh) {
+    resetPlot(activePlotMesh);
   }
 
-  activePlot = mesh;
+  // 👉 new active plot
+  activePlotMesh = mesh;
 
-  // blink stop agar pehle se chal raha ho
-  if (blinkInterval) {
-    clearInterval(blinkInterval);
-  }
+  let blinkOn = true;
 
-  let visible = true;
-  let blinkCount = 0;
+  activeBlinkInterval = setInterval(() => {
+    blinkOn = !blinkOn;
 
-  blinkInterval = setInterval(() => {
-    mesh.material.opacity = visible ? 0.2 : 1;
-    visible = !visible;
-    blinkCount++;
-
-    // 6 blink ke baad stop
-    if (blinkCount >= 6) {
-      clearInterval(blinkInterval);
-
-      // 🔥 FINAL HIGHLIGHT
+    if (blinkOn) {
       mesh.material.opacity = 1;
-      mesh.material.color.set(0xffff00); // 🟡 highlight color
+      mesh.material.color.set(0xffff00); // ⭐ highlight
+    } else {
+      mesh.material.opacity = 0.3;       // blink dim
     }
-  }, 150);
+  }, 400);
 }
+
+
+
+function resetPlot(mesh) {
+  if (!mesh) return;
+
+  // 🔴 blink stop
+  if (activeBlinkInterval) {
+    clearInterval(activeBlinkInterval);
+    activeBlinkInterval = null;
+  }
+
+  // 🔵 reset opacity
+  mesh.material.opacity = 1;
+
+  // 🔵 reset color (original texture color)
+  mesh.material.color.set(0xffffff);
+}
+
