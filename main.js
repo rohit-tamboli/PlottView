@@ -71,6 +71,7 @@ function createSquareTexture(color) {
   return new THREE.CanvasTexture(canvas);
 }
 
+
 function createLocationMarkerTexture(label, color = "#ff3b3b") {
   const w = 256, h = 256;
   const canvas = document.createElement("canvas");
@@ -78,25 +79,102 @@ function createLocationMarkerTexture(label, color = "#ff3b3b") {
   canvas.height = h;
   const ctx = canvas.getContext("2d");
 
-  ctx.font = "bold 40px Arial";
-  ctx.fillStyle = "#fff";
+  /* ======================
+     LABEL STYLE CONFIG
+  ====================== */
+  const fontSize = 12;
+  const paddingX = 7;
+  const paddingY = 3;
+  const radius = 3;
+
+  ctx.font = `bold ${fontSize}px Arial`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
+
+  // text width
+  const textWidth = ctx.measureText(label).width;
+  const boxWidth = textWidth + paddingX * 2;
+  const boxHeight = fontSize + paddingY * 2;
+
+  const boxX = (w - boxWidth) / 2;
+  const boxY = 20;
+
+  /* ======================
+     BACKGROUND BOX
+  ====================== */
+  ctx.fillStyle = "red"
+  roundRect(ctx, boxX, boxY, boxWidth, boxHeight, radius);
+  ctx.fill();
+
+  /* ======================
+     BORDER
+  ====================== */
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  roundRect(ctx, boxX, boxY, boxWidth, boxHeight, radius);
+  ctx.stroke();
+
+  /* ======================
+     TEXT
+  ====================== */
+  ctx.fillStyle = "#ffffff";
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 4;
-
-  ctx.fillText(label, w / 2, 28, 180);
+  ctx.fillText(label.toUpperCase(), w / 2, boxY + paddingY);
   ctx.shadowBlur = 0;
 
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(w / 2, 60);
-  ctx.lineTo(w / 2, h - 70);
-  ctx.stroke();
+  /* ======================
+     STEM
+  ====================== */
+
+  const STEM_HEIGHT = 120;   // 👈 yahan se control hoga
+const STEM_WIDTH  = 2  ;   // 👈 stem thickness
+const DOT_RADIUS  = 14;
+
+ctx.strokeStyle = color;
+ctx.lineWidth = STEM_WIDTH;
+ctx.beginPath();
+
+// stem start (label ke niche)
+const stemStartY = boxY + boxHeight + 5;
+
+// stem end (dot ke upar)
+const stemEndY = stemStartY + STEM_HEIGHT;
+
+ctx.moveTo(w / 2, stemStartY);
+ctx.lineTo(w / 2, stemEndY);
+ctx.stroke();
+
+  /* ======================
+     DOT
+  ====================== */
+ 
+// ctx.beginPath();
+// ctx.arc(w / 2, stemEndY + DOT_RADIUS + 2, DOT_RADIUS, 0, Math.PI * 2);
+// ctx.fillStyle = color;
+// ctx.fill();
+
 
   return new THREE.CanvasTexture(canvas);
 }
+
+/* ======================
+   Rounded Rect Helper
+====================== */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 
 /***********************
  * HELPERS
@@ -157,7 +235,7 @@ function addLocationMarker(data) {
   );
 
   sprite.position.set(...data.position);
-  sprite.scale.set(400, 400, 1);
+  sprite.scale.set(2000, 2000, 1);
   sprite.ignoreClick = true;
 
   panorama.add(sprite);
@@ -193,9 +271,7 @@ fetch(LOCATION_SHEET_URL)
     });
   });
 
-/***********************
- * SEARCH
- ***********************/
+
 
 
 /***********************
@@ -316,6 +392,10 @@ initWhatsAppButton(panorama, viewer, container);
 
 // google map
 initGoogleMapButton();
+
+/***********************
+ * SEARCH
+ ***********************/
 
 const searchFab = document.getElementById("search-fab");
 const floatingSearch = document.getElementById("floating-search");
