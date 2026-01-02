@@ -196,12 +196,7 @@ fetch(LOCATION_SHEET_URL)
 /***********************
  * SEARCH
  ***********************/
-document.getElementById("searchBox").addEventListener("input", e => {
-  const v = e.target.value.toLowerCase();
-  plotCircles.forEach(p => {
-    p.visible = p.visible && p.userData.plot.toLowerCase().includes(v);
-  });
-});
+
 
 /***********************
  * FILTER (CHECKED ONLY)
@@ -321,3 +316,27 @@ initWhatsAppButton(panorama, viewer, container);
 
 // google map
 initGoogleMapButton();
+
+const searchFab = document.getElementById("search-fab");
+const floatingSearch = document.getElementById("floating-search");
+
+searchFab.addEventListener("click", () => {
+  floatingSearch.classList.toggle("active");
+  if (floatingSearch.classList.contains("active")) {
+    floatingSearch.focus();
+  }
+});
+
+// blur → auto close
+floatingSearch.addEventListener("blur", () => {
+  floatingSearch.classList.remove("active");
+});
+
+// 🔥 CONNECT WITH YOUR EXISTING SEARCH
+floatingSearch.addEventListener("input", (e) => {
+  const v = e.target.value.toLowerCase();
+  plotCircles.forEach(p => {
+    p.material.opacity =
+      p.userData.plot.toLowerCase().includes(v) ? 1 : 0;
+  });
+});
