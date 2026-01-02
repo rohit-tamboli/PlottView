@@ -9,9 +9,8 @@ const CIRCLE_SCREEN_SIZE = 100;
 let plotCircles = [];
 let locationMarkers = [];
 
-let activePlotMesh = null;
-let activeBlinkInterval = null;
-
+let activePlot = null;
+let blinkTimer = null;
 
 /***********************
  * DOM
@@ -333,16 +332,11 @@ function handleInteraction(x, y) {
 
   if (!hit) return;
 
-const mesh = hit.object;
-const plot = mesh.userData;
+  const mesh = hit.object;
+  const plot = mesh.userData;
 
-// ⭐ highlight + blink
-highlightAndBlink(mesh);
-
-// show card
-showPlotCard(plot);
-
-
+  startHighlightBlink(mesh);
+  showPlotCard(plot);
 }
 
 container.addEventListener("click", (e) =>
@@ -438,48 +432,56 @@ floatingSearch.addEventListener("input", (e) => {
   });
 });
 
-
 // HIGHLIGHT & BLINK FUNCTION
 
-function highlightAndBlink(mesh) {
+function startHighlightBlink(mesh) {
 
-  // 🔥 agar koi purana plot active hai
-  if (activePlotMesh && activePlotMesh !== mesh) {
-    resetPlot(activePlotMesh);
+  // 🔥 previous plot clean
+  if (activePlot && activePlot !== mesh) {
+    resetActivePlot();
   }
 
-  // 👉 new active plot
-  activePlotMesh = mesh;
+  activePlot = mesh;
 
-  let blinkOn = true;
+  let visible = true;
 
-  activeBlinkInterval = setInterval(() => {
-    blinkOn = !blinkOn;
-
-    if (blinkOn) {
-      mesh.material.opacity = 1;
-      mesh.material.color.set(0xffff00); // ⭐ highlight
-    } else {
-      mesh.material.opacity = 0.3;       // blink dim
-    }
+  blinkTimer = setInterval(() => {
+    visible = !visible;
+    mesh.material.opacity = visible ? 1 : 0.3;
+    mesh.material.color.set(0xffff00);
   }, 400);
 }
 
 
+function resetActivePlot() {
+  if (!activePlot) return;
 
-function resetPlot(mesh) {
-  if (!mesh) return;
-
-  // 🔴 blink stop
-  if (activeBlinkInterval) {
-    clearInterval(activeBlinkInterval);
-    activeBlinkInterval = null;
+  // stop blinking
+  if (blinkTimer) {
+    clearInterval(blinkTimer);
+    blinkTimer = null;
   }
 
-  // 🔵 reset opacity
-  mesh.material.opacity = 1;
+  // ⭐ highlight remove
+  activePlot.material.color.set(0xffffff);
 
-  // 🔵 reset color (original texture color)
-  mesh.material.color.set(0xffffff);
+  // ✅ opacity FILTER ke hisaab se
+  const activeStatuses = getActiveStatuses();
+
+  if (
+    activeStatuses.length === 0 ||
+    !activeStatuses.includes(activePlot.userData.status)
+  ) {
+    activePlot.material.opacity = 0; // filter ke bahar → hide
+  } else {
+    activePlot.material.opacity = 1; // filter ke andar → visible
+  }
+
+  activePlot = null;
 }
 
+
+function getActiveStatuses() {
+  return [...document.querySelectorAll(".filter input:checked")]
+    .map(cb => cb.dataset.status);
+}
