@@ -9,6 +9,9 @@ const CIRCLE_SCREEN_SIZE = 100;
 let plotCircles = [];
 let locationMarkers = [];
 
+let activePlot = null;
+let blinkInterval = null;
+
 /***********************
  * DOM
  ***********************/
@@ -329,7 +332,13 @@ function handleInteraction(x, y) {
 
   if (!hit) return;
 
-  const plot = hit.object.userData;
+  const mesh = hit.object;
+  const plot = mesh.userData;
+
+  // 🔥 blink + highlight
+  blinkAndHighlightPlot(mesh);
+
+  // card show
   showPlotCard(plot);
 }
 
@@ -425,3 +434,36 @@ floatingSearch.addEventListener("input", (e) => {
     p.material.opacity = p.userData.plot.toLowerCase().includes(v) ? 1 : 0;
   });
 });
+
+function blinkAndHighlightPlot(mesh) {
+  // pehle wala plot normal karo
+  if (activePlot && activePlot !== mesh) {
+    activePlot.material.opacity = 1;
+    activePlot.material.color.set(0xffffff);
+  }
+
+  activePlot = mesh;
+
+  // blink stop agar pehle se chal raha ho
+  if (blinkInterval) {
+    clearInterval(blinkInterval);
+  }
+
+  let visible = true;
+  let blinkCount = 0;
+
+  blinkInterval = setInterval(() => {
+    mesh.material.opacity = visible ? 0.2 : 1;
+    visible = !visible;
+    blinkCount++;
+
+    // 6 blink ke baad stop
+    if (blinkCount >= 6) {
+      clearInterval(blinkInterval);
+
+      // 🔥 FINAL HIGHLIGHT
+      mesh.material.opacity = 1;
+      mesh.material.color.set(0xffff00); // 🟡 highlight color
+    }
+  }, 150);
+}
