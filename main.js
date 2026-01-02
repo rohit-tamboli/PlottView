@@ -318,3 +318,6 @@ container.addEventListener("touchend", (e) => {
 
 // WhatsApp
 initWhatsAppButton(panorama, viewer, container);
+
+// google map
+initGoogleMapButton();
