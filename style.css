@@ -76,8 +76,8 @@ canvas {
 
 #whatsapp-btn {
   position: fixed;
-  right: 20px;
-  bottom: 55px;
+  right: 10px;
+  bottom: 25px;
   width: 55px;
   height: 55px;
   z-index: 9999;
@@ -94,8 +94,8 @@ canvas {
 
 #googlemap-btn {
   position: fixed;
-  bottom: 115px;          /* WhatsApp ke upar */
-  right: 25px;
+  bottom: 85px;          /* WhatsApp ke upar */
+  right: 15px;
   width: 45px;
   height: 45px;
   cursor: pointer;
