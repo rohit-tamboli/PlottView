@@ -105,14 +105,15 @@ function createLocationMarkerTexture(label, color = "#ff3b3b") {
   /* ======================
      BACKGROUND BOX
   ====================== */
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "white";
   roundRect(ctx, boxX, boxY, boxWidth, boxHeight, radius);
   ctx.fill();
 
   /* ======================
      BORDER
   ====================== */
-  ctx.strokeStyle = color;
+
+  ctx.strokeStyle = "white";
   ctx.lineWidth = 3;
   roundRect(ctx, boxX, boxY, boxWidth, boxHeight, radius);
   ctx.stroke();
@@ -120,8 +121,8 @@ function createLocationMarkerTexture(label, color = "#ff3b3b") {
   /* ======================
      TEXT
   ====================== */
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.fillStyle = "#000000";
+  // ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 4;
   ctx.fillText(label.toUpperCase(), w / 2, boxY + paddingY);
   ctx.shadowBlur = 0;
@@ -134,7 +135,7 @@ function createLocationMarkerTexture(label, color = "#ff3b3b") {
   const STEM_WIDTH = 2; // 👈 stem thickness
   const DOT_RADIUS = 14;
 
-  ctx.strokeStyle = color;
+  ctx.strokeStyle = "white";
   ctx.lineWidth = STEM_WIDTH;
   ctx.beginPath();
 
@@ -181,7 +182,7 @@ function roundRect(ctx, x, y, w, h, r) {
  * HELPERS
  ***********************/
 function getColor(status) {
-  if (status === "Booked") return 0xff4c4c;   // #ff4c4c  #ff0000
+  if (status === "Booked") return 0xff4c4c; // #ff4c4c  #ff0000
   if (status === "Available") return 0x3232ff; // #3232ff #0000ff
   if (status === "Ongoing") return 0xffff66; // #ffff66 #ffff00
   return 0xffffff;
@@ -435,7 +436,6 @@ floatingSearch.addEventListener("input", (e) => {
 // HIGHLIGHT & BLINK FUNCTION
 
 function startHighlightBlink(mesh) {
-
   // 🔥 previous plot clean
   if (activePlot && activePlot !== mesh) {
     resetActivePlot();
@@ -451,7 +451,6 @@ function startHighlightBlink(mesh) {
     mesh.material.color.set(0xffff00);
   }, 400);
 }
-
 
 function resetActivePlot() {
   if (!activePlot) return;
@@ -480,8 +479,8 @@ function resetActivePlot() {
   activePlot = null;
 }
 
-
 function getActiveStatuses() {
-  return [...document.querySelectorAll(".filter input:checked")]
-    .map(cb => cb.dataset.status);
+  return [...document.querySelectorAll(".filter input:checked")].map(
+    (cb) => cb.dataset.status
+  );
 }
