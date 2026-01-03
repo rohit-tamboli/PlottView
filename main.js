@@ -299,7 +299,7 @@ document.querySelectorAll(".filter input").forEach((cb) => {
 
     plotCircles.forEach((p) => {
       if (activeStatuses.includes(p.userData.status)) {
-        p.material.opacity = 1; // ✅ show
+        p.material.opacity = 0.5; // ✅ show
       } else {
         p.material.opacity = 0; // ❌ hide
       }
@@ -474,7 +474,7 @@ function resetActivePlot() {
   ) {
     activePlot.material.opacity = 0; // filter ke bahar → hide
   } else {
-    activePlot.material.opacity = 1; // filter ke andar → visible
+    activePlot.material.opacity = 0.5; // filter ke andar → visible
   }
 
   activePlot = null;
