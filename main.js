@@ -181,9 +181,9 @@ function roundRect(ctx, x, y, w, h, r) {
  * HELPERS
  ***********************/
 function getColor(status) {
-  if (status === "Booked") return 0xff0000;
-  if (status === "Available") return 0x0000ff;
-  if (status === "Ongoing") return 0xffff00;
+  if (status === "Booked") return 0xff4c4c;   // #ff4c4c  #ff0000
+  if (status === "Available") return 0x3232ff; // #3232ff #0000ff
+  if (status === "Ongoing") return 0xffff66; // #ffff66 #ffff00
   return 0xffffff;
 }
 
